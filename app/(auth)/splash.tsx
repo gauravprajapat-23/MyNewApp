@@ -3,12 +3,26 @@ import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../hooks/useTheme';
+import { useUser } from '../../contexts/UserContext';
 import { Icon } from '../../components/ui/Icon';
 
 export default function SplashScreen() {
   const router = useRouter();
   const theme = useTheme();
   const { colors } = theme;
+  const { isGuest, userId } = useUser();
+
+  // Auto-redirect if user is already logged in
+  useEffect(() => {
+    if (!isGuest && userId) {
+      // User is logged in - auto redirect to dashboard after 2 seconds
+      const timer = setTimeout(() => {
+        router.replace('/(tabs)');
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isGuest, userId]);
 
   return (
     <View style={styles.container}>
