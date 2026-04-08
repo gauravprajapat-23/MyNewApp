@@ -116,17 +116,19 @@ router.get('/nearby/:lat/:lng', async (req: Request, res: Response) => {
     const { radius = 10 } = req.query; // radius in km
 
     const result = await pool.query(
-      `SELECT *, 
-        (6371 * acos(
-          cos(radians($1)) * cos(radians(latitude)) * 
-          cos(radians(longitude) - radians($2)) + 
-          sin(radians($1)) * sin(radians(latitude))
-        )) AS distance
-       FROM agents
-       WHERE status = 'open'
-       HAVING distance <= $3
-       ORDER BY distance ASC
-       LIMIT 50`,
+      `SELECT * FROM (
+        SELECT *, 
+          (6371 * acos(
+            cos(radians($1)) * cos(radians(latitude)) * 
+            cos(radians(longitude) - radians($2)) + 
+            sin(radians($1)) * sin(radians(latitude))
+          )) AS distance
+        FROM agents
+        WHERE status = 'open'
+      ) AS subquery
+      WHERE distance <= $3
+      ORDER BY distance ASC
+      LIMIT 50`,
       [parseFloat(lat), parseFloat(lng), parseFloat(radius as string)]
     );
 
