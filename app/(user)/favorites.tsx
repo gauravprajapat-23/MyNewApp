@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, Text, ActivityIndicator, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useTheme } from '../../hooks/useTheme';
-import { useUser } from '../../contexts/UserContext';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { fetchAgentById, getErrorMessage } from '../../api';
 import { ScreenContainer } from '../../components/layout/ScreenContainer';
-import { DepositPointCard } from '../../components/user/DepositPointCard';
-import { mockAgents } from '../../data/mockAgents';
 import { Icon } from '../../components/ui/Icon';
+import { DepositPointCard } from '../../components/user/DepositPointCard';
+import { useUser } from '../../contexts/UserContext';
+import { useTheme } from '../../hooks/useTheme';
 import { DepositPoint } from '../../types/user';
 
 export default function FavoritesScreen() {
@@ -26,8 +26,19 @@ export default function FavoritesScreen() {
   const loadFavorites = async () => {
     try {
       setLoading(true);
-      // Filter mock agents by favorite IDs (for now - will use API when logged in)
-      const favAgents = mockAgents.filter(agent => favorites.includes(agent.id));
+      
+      // Fetch agent details for each favorite ID
+      const favAgents: DepositPoint[] = [];
+      
+      for (const agentId of favorites) {
+        try {
+          const agent = await fetchAgentById(agentId);
+          favAgents.push(agent);
+        } catch (err) {
+          console.warn(`Could not load agent ${agentId}:`, getErrorMessage(err));
+        }
+      }
+      
       setFavoriteAgents(favAgents);
     } catch (error) {
       console.error('Error loading favorites:', error);

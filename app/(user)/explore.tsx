@@ -1,18 +1,17 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, Text, ScrollView, ActivityIndicator, RefreshControl, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useTheme } from '../../hooks/useTheme';
-import { useUser } from '../../contexts/UserContext';
-import { useLocation } from '../../contexts/LocationContext';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { fetchNearbyAgents, getErrorMessage, searchAgentsApi } from '../../api';
 import { ScreenContainer } from '../../components/layout/ScreenContainer';
-import { SearchBar } from '../../components/ui/SearchBar';
 import { FilterChip } from '../../components/ui/FilterChip';
-import { DepositPointCard } from '../../components/user/DepositPointCard';
-import { mockAgents } from '../../data/mockAgents';
-import { applyFilters } from '../../utils/filtering';
 import { Icon } from '../../components/ui/Icon';
-import { fetchNearbyAgents, searchAgentsApi, getErrorMessage } from '../../api';
+import { SearchBar } from '../../components/ui/SearchBar';
+import { DepositPointCard } from '../../components/user/DepositPointCard';
+import { useLocation } from '../../contexts/LocationContext';
+import { useUser } from '../../contexts/UserContext';
+import { useTheme } from '../../hooks/useTheme';
 import { DepositPoint } from '../../types/user';
+import { applyFilters } from '../../utils/filtering';
 
 const ALL_SERVICES = ['Cash In', 'Cash Out', 'AEPS', 'UPI', 'Bill Payments', 'DMT'];
 
@@ -34,15 +33,23 @@ export default function ExploreScreen() {
 
   // Load agents on mount
   useEffect(() => {
+    console.log('[Explore] Location changed:', !!location);
     if (location) {
       loadAgents();
     }
   }, [location]);
 
   const loadAgents = async () => {
-    if (!location) return;
+    if (!location) {
+      console.log('[Explore] No location, skipping load');
+      return;
+    }
 
     try {
+      console.log('[Explore] Loading agents...', {
+        lat: location.latitude,
+        lng: location.longitude,
+      });
       setLoading(true);
       setError(null);
       const data = await fetchNearbyAgents(
@@ -50,13 +57,19 @@ export default function ExploreScreen() {
         location.longitude,
         10 // 10km radius
       );
+      console.log('[Explore] Agents loaded:', data.length);
       setAgents(data);
+      if (data.length === 0) {
+        console.log('[Explore] No agents found');
+        setError('No agents found in your area.');
+      }
     } catch (err) {
       const message = getErrorMessage(err);
-      console.error('Error loading agents:', message);
-      setError('Failed to load agents. Using offline data.');
-      setAgents(mockAgents); // Fallback to mock data
+      console.error('[Explore] Error loading agents:', message, err);
+      setError('Failed to connect to server. Please check your internet connection.');
+      setAgents([]);
     } finally {
+      console.log('[Explore] Load complete');
       setLoading(false);
     }
   };

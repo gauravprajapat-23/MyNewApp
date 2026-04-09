@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '../../hooks/useTheme';
-import { useUser } from '../../contexts/UserContext';
-import { Icon } from '../../components/ui/Icon';
-import { ScreenContainer } from '../../components/layout/ScreenContainer';
-import { mockAgents } from '../../data/mockAgents';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { fetchAgentById, getErrorMessage } from '../../api';
+import { ScreenContainer } from '../../components/layout/ScreenContainer';
+import { Icon } from '../../components/ui/Icon';
+import { useUser } from '../../contexts/UserContext';
+import { useTheme } from '../../hooks/useTheme';
 import { DepositPoint } from '../../types/user';
 
 export default function UserAgentDetailsScreen() {
@@ -39,11 +38,8 @@ export default function UserAgentDetailsScreen() {
     } catch (err) {
       const message = getErrorMessage(err);
       console.error('Error loading agent:', message);
-      setError('Failed to load agent details');
-      
-      // Fallback to mock data
-      const mockAgent = mockAgents.find(a => a.id === id) || mockAgents[0];
-      setAgent(mockAgent);
+      setError('Failed to load agent details. Please try again.');
+      setAgent(null);
     } finally {
       setLoading(false);
     }

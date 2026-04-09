@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Request, Response, Router } from 'express';
 import { pool } from '../server';
 
 const router = Router();
@@ -115,6 +115,8 @@ router.get('/nearby/:lat/:lng', async (req: Request, res: Response) => {
     const { lat, lng } = req.params;
     const { radius = 10 } = req.query; // radius in km
 
+    console.log('[Backend] Fetching nearby agents:', { lat, lng, radius });
+
     const result = await pool.query(
       `SELECT * FROM (
         SELECT *, 
@@ -132,13 +134,15 @@ router.get('/nearby/:lat/:lng', async (req: Request, res: Response) => {
       [parseFloat(lat), parseFloat(lng), parseFloat(radius as string)]
     );
 
+    console.log('[Backend] Found', result.rows.length, 'agents nearby');
+
     res.json({
       success: true,
       count: result.rows.length,
       data: result.rows,
     });
   } catch (error) {
-    console.error('Error fetching nearby agents:', error);
+    console.error('[Backend] Error fetching nearby agents:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch nearby agents',
